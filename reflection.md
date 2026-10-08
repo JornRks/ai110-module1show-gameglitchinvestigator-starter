@@ -5,8 +5,11 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 ## 1. What was broken when you started?
 
 - What did the game look like the first time you ran it?
+When I first ran the game, everything looked good visually, the UI was normal. However, as I played I noticed a few issues I will list below.
 - List at least two concrete bugs you noticed at the start  
   (for example: "the hints were backwards").
+1. When I first ran the game, it displayed I had 7 guesses left, when in reality I should have 8 left. 
+2. As I was making my guesses, the hints displayed were incorrect/reversed. When I guessed too high, it would tell me to guess higher, and vice versa. The hints should be displaying the opposite.
 
 **Bug Reproduction Log**
 
@@ -14,9 +17,9 @@ Document at least 3 bugs you found. Add rows as needed.
 
 | Input | Expected Behavior | Actual Behavior | Console Output / Error |
 |-------|-------------------|-----------------|------------------------|
-| | | | |
-| | | | |
-| | | | |
+|Attempts/Starting a game |Attempts left should display 8 |Attempts left is 7 |None |
+|Entered a guess below the secret number |Display 'Go HIGHER!' |Displayed 'Go LOWER!' |None |
+|Click New Game after a win or loss |Attempts, status, history, and score reset |Only the attempts and secret number reset |None |
 
 ---
 
