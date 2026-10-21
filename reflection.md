@@ -26,17 +26,22 @@ Document at least 3 bugs you found. Add rows as needed.
 ## 2. How did you use AI as a teammate?
 
 - Which AI tools did you use on this project (for example: ChatGPT, Gemini, Copilot)?
+I used Claude in VScode for this project.
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
+One provided suggestion that was correct was Claude's fix of my attempts left bug. It explained that st.session_state.attempts started at 1, rather than 0. This meant the display showed 8 - 1 = 7, even before the user made their first guess. I verified this was correct by not only creating a pytest for the repaired bug, but also checking in the game itself. 
 - Give one example of an AI suggestion you did not accept as written (including what the AI suggested, why you rejected or changed it, and how you verified your version). It does not have to be a suggestion that was wrong: over-engineered, out of scope, harder to read, or a poor fit for this codebase all count.
+One suggestion I did not accept was the first pytest Claude created for my check_guess bug, this was was because 3 of my tests kept failing. I found it was due to the pytest expecting a single string retured, while my check_guess function returned a tuple of 2 strings. I then explained this error to Claude, and it changed the expected return in my pytest to a tuple as well. I then ran pytest again, and each test passed. 
 
 ---
 
 ## 3. Debugging and testing your fixes
 
-- How did you decide whether a bug was really fixed?
+- How did you decide whether a bug was really fixed? I decided a bug was really fixed after I verified the created pytest as correct, and ran this on my code, only accepting all passes. After this, I ran the app via streamlit and verified the bugs were fixed while playing the game.
 - Describe at least one test you ran (manual or using pytest)  
   and what it showed you about your code.
+One test I ran was using pytest and it was named _test_hints_point_twords_secret. This test checked if the check_guess function would correctly return the proper hint, given both, if a guess was too high/low. This test showed me that my code was correctly comparing guesses, diplaying the proper content, and returning the appropriate hints.  
 - Did AI help you design or understand any tests? How?
+Yes, AI helped me understand the pytest I used to test my attempts left bug. I didn't understand how this was being checked, so I had it explain how it uses test_attempts_left_starts_at_full_limit and test_player_gets_all_attempts_before_losing. One checks if the value of 'attempts' is 0 when a new game starts, and the other simulates 7 wrong guesses and checks if the game is still ongoing and if the user gets one more till losing.
 
 ---
 
