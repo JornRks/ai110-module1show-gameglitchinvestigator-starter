@@ -1,4 +1,8 @@
+import math
+
+
 #FIX: Refactored from app.py to here using AI agent.
+#Updated the difficulty settings so hard has a range 1-100 rather than 1-50
 def get_range_for_difficulty(difficulty: str):
     """Return (low, high) inclusive range for a given difficulty."""
     if difficulty == "Easy":
@@ -6,12 +10,12 @@ def get_range_for_difficulty(difficulty: str):
     if difficulty == "Normal":
         return 1, 100
     if difficulty == "Hard":
-        return 1, 50
+        return 1, 100
     return 1, 100
 
 
 #FIX: Refactored from app.py to here using AI agent.
-def parse_guess(raw: str):
+def parse_guess(raw: str, low: int = None, high: int = None):
     """
     Parse user input into an int guess.
 
@@ -20,16 +24,25 @@ def parse_guess(raw: str):
     if raw is None:
         return False, None, "Enter a guess."
 
-    if raw == "":
+    if raw.strip() == "":
         return False, None, "Enter a guess."
 
+    #FIX: decimals were truncated with int(float(raw)), so "19.99" became 19, and
+    # "1e2" was rejected because it had no ".". Whole numbers still parse with int();
+    # anything else float() accepts is rounded to the nearest whole number (half up,
+    # so 2.5 -> 3, unlike Python's round() which gives 2).
     try:
-        if "." in raw:
-            value = int(float(raw))
-        else:
-            value = int(raw)
-    except Exception:
-        return False, None, "That is not a number."
+        value = int(raw)
+    except ValueError:
+        try:
+            value = math.floor(float(raw) + 0.5)
+        except Exception:
+            return False, None, "That is not a number."
+
+    #FIX: out-of-range guesses like -5 or 1000 were accepted and only got a
+    # "higher"/"lower" hint. Now they are rejected when a range is given.
+    if low is not None and high is not None and not (low <= value <= high):
+        return False, None, f"Guess must be between {low} and {high}."
 
     return True, value, None
 
@@ -43,18 +56,12 @@ def check_guess(guess, secret):
     if guess == secret:
         return "Win", "🎉 Correct!"
 
-    try:
-        if guess > secret:
-            return "Too High", "📉 Go LOWER!"
-        else:
-            return "Too Low", "📈 Go HIGHER!"
-    except TypeError:
-        g = str(guess)
-        if g == secret:
-            return "Win", "🎉 Correct!"
-        if g > secret:
-            return "Too High", "📉 Go LOWER!"
-        return "Too Low", "📈 Go HIGHER!"
+    #FIX: removed the TypeError fallback that compared str(guess) to a string secret.
+    # Text comparison goes character by character, so "9" > "50" and "60" > "100",
+    # giving "Too High" for guesses that were too low. Both values are ints now.
+    if guess > secret:
+        return "Too High", "📉 Go LOWER!"
+    return "Too Low", "📈 Go HIGHER!"
 
 
 #FIX: Refactored from app.py to here using AI agent.

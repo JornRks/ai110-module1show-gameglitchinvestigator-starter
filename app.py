@@ -34,8 +34,15 @@ low, high = get_range_for_difficulty(difficulty)
 st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
 
-if "secret" not in st.session_state:
+#FIX: the secret was only picked once, so switching difficulty kept the old secret
+# (e.g. 87 on Easy, whose range is 1-20). Now a difficulty change starts a fresh game.
+if st.session_state.get("difficulty") != difficulty:
+    st.session_state.difficulty = difficulty
     st.session_state.secret = random.randint(low, high)
+    st.session_state.attempts = 0
+    st.session_state.score = 0
+    st.session_state.status = "playing"
+    st.session_state.history = []
 
 #FIX: attempts started at 1 instead of 0, so "Attempts left" showed one fewer than the
 # limit (7 instead of 8 on Normal) before any guess. Starting at 0 matches the New Game
@@ -54,8 +61,12 @@ if "history" not in st.session_state:
 
 st.subheader("Make a guess")
 
-st.info(
-    f"Guess a number between 1 and 100. "
+#FIX: this box was drawn before the Submit code below added to attempts, so it was always
+# one guess behind (it said "1 attempt left" on the game-over screen). It's now a
+# placeholder that gets redrawn after the guess is processed.
+attempts_box = st.empty()
+attempts_box.info(
+    f"Guess a number between {low} and {high}. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
 )
 
@@ -79,10 +90,15 @@ with col2:
 with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
-#FIXME: Dosent reset the score, status, or history
+#FIX: New Game only reset attempts and secret, so status stayed "won"/"lost" and the
+# game stayed locked. Now score, status, and history are reset too. The secret also
+# used a hardcoded 1-100 range; it now uses the current difficulty's range.
 if new_game:
     st.session_state.attempts = 0
-    st.session_state.secret = random.randint(1, 100)
+    st.session_state.secret = random.randint(low, high)
+    st.session_state.score = 0
+    st.session_state.status = "playing"
+    st.session_state.history = []
     st.success("New game started.")
     st.rerun()
 
@@ -94,22 +110,21 @@ if st.session_state.status != "playing":
     st.stop()
 
 if submit:
-    st.session_state.attempts += 1
-
-    ok, guess_int, err = parse_guess(raw_guess)
+    #FIX: the range is now passed in so out-of-range guesses are rejected, and the
+    # attempt counter only goes up for valid guesses, so a typo or an out-of-range
+    # number no longer uses up one of the player's attempts.
+    ok, guess_int, err = parse_guess(raw_guess, low, high)
 
     if not ok:
         st.session_state.history.append(raw_guess)
         st.error(err)
     else:
+        st.session_state.attempts += 1
         st.session_state.history.append(guess_int)
 
-        if st.session_state.attempts % 2 == 0:
-            secret = str(st.session_state.secret)
-        else:
-            secret = st.session_state.secret
-
-        outcome, message = check_guess(guess_int, secret)
+        #FIX: on even attempts the secret was turned into a string, which made
+        # check_guess compare text instead of numbers ("9" > "50"). Always pass the int.
+        outcome, message = check_guess(guess_int, st.session_state.secret)
 
         if show_hint:
             st.warning(message)
@@ -135,6 +150,11 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+
+    attempts_box.info(
+        f"Guess a number between {low} and {high}. "
+        f"Attempts left: {attempt_limit - st.session_state.attempts}"
+    )
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")
